@@ -1,0 +1,54 @@
+#!/usr/bin/env python3
+import os
+import sys
+import argparse
+
+TEMPLATE = """\
+# run python3 using exec
+"exec" "$(dirname $(readlink -f -- $0))/python3" "$0" "$@"
+
+import os
+import sys
+
+if __name__ == "__main__":
+    from {module} import {func}
+    sys.exit({func}())
+"""
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("wrapper_list")
+
+    dir = os.path.dirname(__file__)
+
+    args = parser.parse_args()
+    for e in args.wrapper_list.strip().split():
+        name, module, func = e.split(":")
+        script_path = os.path.join(dir, name)
+        with open(script_path, "w") as f:
+            f.write(
+                TEMPLATE.format(
+                    module=module,
+                    func=func,
+                )
+            )
+
+        os.chmod(script_path, 0o755)
+
+    # add to .gitignore
+    existing_files = set()
+    gitignore_path = os.path.join(dir, ".gitignore")
+    if os.path.exists(gitignore_path):
+        with open(gitignore_path) as f:
+            existing_files = set(f.read().splitlines())
+
+    with open(gitignore_path, "a") as f:
+        for e in args.wrapper_list.strip().split():
+            name = e.split(":")[0]
+            if name not in existing_files:
+                f.write(f"{name}\n")
+
+
+if __name__ == "__main__":
+    main()

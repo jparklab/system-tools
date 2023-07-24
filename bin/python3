@@ -1,0 +1,13 @@
+#!/usr/bin/bash
+
+DIR=$(dirname $(readlink -f -- $0))
+REPO_DIR=$(dirname ${DIR})
+
+if [ -z "${VIRTUAL_ENV}" ]; then
+    echo "VIRTUAL_ENV is not set, cannot find python binary"
+    exit 1
+fi
+PYTHON=${VIRTUAL_ENV}/bin/python3
+
+export PYTHONPATH=${REPO_DIR}/python
+exec ${PYTHON} $@
